@@ -35,31 +35,15 @@ class LinkedInClient(ProfileProvider):
         return ProfileIdentity(raw_url=profile_url, slug=slug)
 
     async def get_profile_data(self, identity: ProfileIdentity) -> Dict[str, Any]:
-        # The exact endpoints would be determined via reverse engineering.
-        # This is a stub for the LinkedIn HTTP contract.
+        """
+        Mock implementation that returns predefined dummy data.
+        In a real scenario, this would use self.client.get(...) to hit LinkedIn endpoints.
+        """
+        # We will mock the response here since we are not using real credentials.
+        # A real implementation would execute something like:
+        # response = await self.client.get(f"https://www.linkedin.com/voyager/api/identity/profiles/{identity.slug}/profileView")
+        # return response.json()
 
-        # Example URL based on common unofficial approaches:
-        # profile_url = f"https://www.linkedin.com/voyager/api/identity/profiles/{identity.slug}/profileView"
-
-        # We will mock the response here since we don't have real credentials or a live session to test.
-        # A real implementation would execute:
-        # try:
-        #     response = await self.client.get(profile_url)
-        #     response.raise_for_status()
-        #     return response.json()
-        # except httpx.HTTPStatusError as e:
-        #     if e.response.status_code == 404:
-        #         raise ProfileNotFoundError()
-        #     elif e.response.status_code == 429:
-        #         raise UpstreamRateLimitError()
-        #     elif e.response.status_code in (401, 403):
-        #         raise UpstreamAuthenticationError()
-        #     else:
-        #         raise UpstreamUnavailableError()
-        # except httpx.TimeoutException:
-        #     raise UpstreamTimeoutError()
-
-        # Returning a mock raw dict for parsing
         return {
             "slug": identity.slug,
             "firstName": "John",
