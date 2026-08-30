@@ -46,7 +46,7 @@ class CacheService:
             return False
 
         self.rate_limits[key]["count"] += 1
-        return self.rate_limits[key]["count"] > limit
+        return bool(int(self.rate_limits[key]["count"]) > limit)
 
 
 cache_service = CacheService()
