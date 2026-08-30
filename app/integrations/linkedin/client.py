@@ -56,7 +56,7 @@ class LinkedInClient(ProfileProvider):
         try:
             response = await self.client.get(profile_url)
 
-            if response.status_code == 404:
+            if response.status_code in (404, 410):
                 raise ProfileNotFoundError()
             elif response.status_code == 429:
                 raise UpstreamRateLimitError()
