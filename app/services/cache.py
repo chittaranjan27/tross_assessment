@@ -1,8 +1,6 @@
-import json
 import logging
-from typing import Any, Optional
-
-from redis import asyncio as aioredis
+import time
+from typing import Any, Dict, Optional
 
 from app.core.config import settings
 
@@ -10,41 +8,45 @@ logger = logging.getLogger(__name__)
 
 
 class CacheService:
+    """
+    A simple in-memory cache and rate limiter.
+    Replaces Redis so the application can run standalone without external dependencies.
+    """
+
     def __init__(self) -> None:
-        self.redis = aioredis.from_url(settings.redis_url, decode_responses=True)
+        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.rate_limits: Dict[str, Dict[str, Any]] = {}
         self.ttl = settings.cache_ttl_seconds
 
     async def get(self, key: str) -> Optional[Any]:
-        try:
-            val = await self.redis.get(key)
-            if val:
-                return json.loads(val)
-        except Exception as e:
-            logger.error(f"Redis get error for {key}: {e}")
+        if key in self.cache:
+            entry = self.cache[key]
+            if time.time() < entry["expires_at"]:
+                return entry["value"]
+            else:
+                del self.cache[key]
         return None
 
     async def set(self, key: str, value: Any) -> bool:
-        try:
-            await self.redis.set(key, json.dumps(value), ex=self.ttl)
-            return True
-        except Exception as e:
-            logger.error(f"Redis set error for {key}: {e}")
-        return False
+        self.cache[key] = {"value": value, "expires_at": time.time() + self.ttl}
+        return True
 
     async def is_rate_limited(
         self, identifier: str, limit: int, window: int = 60
     ) -> bool:
         """Returns True if rate limited, False otherwise"""
-        try:
-            key = f"rate_limit:{identifier}"
-            current = int(await self.redis.incr(key))
-            if current == 1:
-                await self.redis.expire(key, window)
-            return bool(current > limit)
-        except Exception as e:
-            logger.error(f"Redis rate limit error for {identifier}: {e}")
-            # Fail open if Redis is down
+        now = time.time()
+        key = f"rate_limit:{identifier}"
+
+        if (
+            key not in self.rate_limits
+            or self.rate_limits[key]["window_start"] < now - window
+        ):
+            self.rate_limits[key] = {"count": 1, "window_start": now}
             return False
+
+        self.rate_limits[key]["count"] += 1
+        return self.rate_limits[key]["count"] > limit
 
 
 cache_service = CacheService()
