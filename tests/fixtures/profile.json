@@ -1,0 +1,34 @@
+{
+    "slug": "example-slug",
+    "firstName": "John",
+    "lastName": "Doe",
+    "headline": "Senior Software Engineer",
+    "locationName": "Bengaluru, Karnataka, India",
+    "summary": "Experienced software engineer.",
+    "experience": [
+        {
+            "title": "Senior Software Engineer",
+            "companyName": "Example",
+            "locationName": "Bengaluru",
+            "timePeriod": {
+                "startDate": {"year": 2023, "month": 1}
+            }
+        }
+    ],
+    "education": [
+        {
+            "schoolName": "Example University",
+            "degreeName": "MCA",
+            "fieldOfStudy": "Computer Science",
+            "timePeriod": {
+                "startDate": {"year": 2020},
+                "endDate": {"year": 2022}
+            }
+        }
+    ],
+    "skills": [
+        {"name": "Python"},
+        {"name": "React"},
+        {"name": "python"}
+    ]
+}
