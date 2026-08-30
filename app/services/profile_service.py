@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.provider = LinkedInClient()
         self.cache = cache_service
 

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.redis = aioredis.from_url(settings.redis_url, decode_responses=True)
         self.ttl = settings.cache_ttl_seconds
 
@@ -37,10 +37,10 @@ class CacheService:
         """Returns True if rate limited, False otherwise"""
         try:
             key = f"rate_limit:{identifier}"
-            current = await self.redis.incr(key)
+            current = int(await self.redis.incr(key))
             if current == 1:
                 await self.redis.expire(key, window)
-            return current > limit
+            return bool(current > limit)
         except Exception as e:
             logger.error(f"Redis rate limit error for {identifier}: {e}")
             # Fail open if Redis is down

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class LinkedInClient(ProfileProvider):
-    def __init__(self):
+    def __init__(self) -> None:
         # Setup headers
         self.headers = {
             "User-Agent": settings.linkedin_user_agent,

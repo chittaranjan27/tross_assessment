@@ -1,10 +1,12 @@
 import logging
 import time
 import uuid
+from typing import Awaitable, Callable
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.responses import Response
 
 from app.api.v1 import health
 from app.api.v1.endpoints import profiles
@@ -33,7 +35,9 @@ app.include_router(profiles.router, prefix="/api/v1/profiles", tags=["profiles"]
 
 
 @app.middleware("http")
-async def request_middleware(request: Request, call_next):
+async def request_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
     request.state.request_id = request_id
 
@@ -57,7 +61,7 @@ async def request_middleware(request: Request, call_next):
 
 
 @app.exception_handler(AppException)
-async def app_exception_handler(request: Request, exc: AppException):
+async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.http_status,
         content={
@@ -71,7 +75,7 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception(f"Unhandled exception: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
