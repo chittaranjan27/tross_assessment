@@ -70,7 +70,7 @@ class LinkedInClient(ProfileProvider):
             try:
                 data = response.json()
             except Exception:
-                raise UpstreamResponseParseError()
+                raise UpstreamResponseParseError() from None
 
             # LinkedIn Voyager returns a nested structure — flatten it
             return self._normalize_voyager_response(data, identity.slug)
@@ -84,10 +84,10 @@ class LinkedInClient(ProfileProvider):
         ):
             raise
         except httpx.TimeoutException:
-            raise UpstreamTimeoutError()
+            raise UpstreamTimeoutError() from None
         except httpx.RequestError as e:
             logger.error(f"Request error for {identity.slug}: {e}")
-            raise UpstreamUnavailableError()
+            raise UpstreamUnavailableError() from None
 
     def _normalize_voyager_response(
         self, data: Dict[str, Any], slug: str
@@ -96,27 +96,27 @@ class LinkedInClient(ProfileProvider):
         Flatten LinkedIn's Voyager profileView response into our internal schema.
         The response contains a top-level profile object + an 'included' entity graph.
         """
-        # Build entity lookup from included array for reference resolution
+        # Build entity lookup from included array for future reference resolution
         included = data.get("included", [])
-        entities: Dict[str, Any] = {
-            item["entityUrn"]: item
-            for item in included
-            if isinstance(item, dict) and item.get("entityUrn")
-        }
 
         # Core profile is usually the first element or in data directly
         profile = data.get("profile", {}) or (included[0] if included else {})
         if not profile:
             profile = data
 
-        # Extract basic fields
-        first_name = profile.get("firstName", "")
-        last_name = profile.get("lastName", "")
-        headline = profile.get("headline", "")
-        location_name = profile.get("locationName", "")
-        summary = profile.get("summary", "")
+        return {
+            "slug": slug,
+            "firstName": profile.get("firstName", ""),
+            "lastName": profile.get("lastName", ""),
+            "headline": profile.get("headline", ""),
+            "locationName": profile.get("locationName", ""),
+            "summary": profile.get("summary", ""),
+            "experience": self._extract_experiences(included),
+            "education": self._extract_educations(included),
+            "skills": self._extract_skills(included),
+        }
 
-        # Extract experience from included entities
+    def _extract_experiences(self, included: list[Any]) -> list[Dict[str, Any]]:
         experiences = []
         for item in included:
             if not isinstance(item, dict):
@@ -134,8 +134,9 @@ class LinkedInClient(ProfileProvider):
                         "description": item.get("description"),
                     }
                 )
+        return experiences
 
-        # Extract education
+    def _extract_educations(self, included: list[Any]) -> list[Dict[str, Any]]:
         educations = []
         for item in included:
             if not isinstance(item, dict):
@@ -152,8 +153,9 @@ class LinkedInClient(ProfileProvider):
                         "timePeriod": time_period,
                     }
                 )
+        return educations
 
-        # Extract skills
+    def _extract_skills(self, included: list[Any]) -> list[Dict[str, Any]]:
         skills = []
         for item in included:
             if not isinstance(item, dict):
@@ -164,15 +166,4 @@ class LinkedInClient(ProfileProvider):
                 name = item.get("name")
                 if name:
                     skills.append({"name": name})
-
-        return {
-            "slug": slug,
-            "firstName": first_name,
-            "lastName": last_name,
-            "headline": headline,
-            "locationName": location_name,
-            "summary": summary,
-            "experience": experiences,
-            "education": educations,
-            "skills": skills,
-        }
+        return skills
