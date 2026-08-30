@@ -1,10 +1,13 @@
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-import uuid
-import time
 import logging
+import time
+import uuid
 
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.api.v1 import health
+from app.api.v1.endpoints import profiles
 from app.core.config import settings
 from app.core.exceptions import AppException
 
@@ -25,34 +28,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api.v1 import health
-from app.api.v1.endpoints import profiles
-
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(profiles.router, prefix="/api/v1/profiles", tags=["profiles"])
+
 
 @app.middleware("http")
 async def request_middleware(request: Request, call_next):
     request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
     request.state.request_id = request_id
-    
+
     start_time = time.time()
-    
+
     # Process the request
     response = await call_next(request)
-    
+
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     response.headers["X-Request-ID"] = request_id
-    
+
     logger.info(
         f"Request: {request.method} {request.url.path} "
         f"completed in {process_time:.4f}s "
         f"Status: {response.status_code} "
         f"RequestID: {request_id}"
     )
-    
+
     return response
+
 
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
@@ -62,10 +64,11 @@ async def app_exception_handler(request: Request, exc: AppException):
             "error": {
                 "code": exc.code,
                 "message": exc.message,
-                "request_id": getattr(request.state, "request_id", None)
+                "request_id": getattr(request.state, "request_id", None),
             }
         },
     )
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -76,7 +79,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
                 "message": "An unexpected error occurred.",
-                "request_id": getattr(request.state, "request_id", None)
+                "request_id": getattr(request.state, "request_id", None),
             }
         },
     )

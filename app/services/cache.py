@@ -1,7 +1,9 @@
 import json
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
+
 from redis import asyncio as aioredis
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -27,7 +29,7 @@ class CacheService:
         except Exception as e:
             logger.error(f"Redis set error for {key}: {e}")
         return False
-        
+
     async def is_rate_limited(self, identifier: str, limit: int, window: int = 60) -> bool:
         """Returns True if rate limited, False otherwise"""
         try:

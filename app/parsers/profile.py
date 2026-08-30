@@ -1,14 +1,16 @@
-from typing import Dict, Any
-from app.schemas.profile import ProfileData, Location, Experience, Education
-from app.parsers.normalizer import normalize_date, deduplicate_skills
+from typing import Any, Dict
+
+from app.parsers.normalizer import deduplicate_skills, normalize_date
+from app.schemas.profile import Education, Experience, Location, ProfileData
+
 
 def parse_profile(raw_data: Dict[str, Any], url: str) -> ProfileData:
     """Parses raw provider data into internal typed structures."""
-    
+
     first_name = raw_data.get("firstName", "")
     last_name = raw_data.get("lastName", "")
     name = f"{first_name} {last_name}".strip()
-    
+
     # Location
     loc_name = raw_data.get("locationName")
     location = None
@@ -27,7 +29,7 @@ def parse_profile(raw_data: Dict[str, Any], url: str) -> ProfileData:
         time_period = exp.get("timePeriod", {})
         start_date = normalize_date(time_period.get("startDate"))
         end_date = normalize_date(time_period.get("endDate"))
-        
+
         experiences.append(
             Experience(
                 title=exp.get("title"),
@@ -44,7 +46,7 @@ def parse_profile(raw_data: Dict[str, Any], url: str) -> ProfileData:
         time_period = edu.get("timePeriod", {})
         start_date = normalize_date(time_period.get("startDate"))
         end_date = normalize_date(time_period.get("endDate"))
-        
+
         educations.append(
             Education(
                 institution=edu.get("schoolName"),

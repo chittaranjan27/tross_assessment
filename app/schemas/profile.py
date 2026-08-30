@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field, HttpUrl, field_validator
-from typing import Optional, List, Any
 import re
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, field_validator
+
 from app.core.exceptions import InvalidProfileUrlError
+
 
 class ProfileRequest(BaseModel):
     profile_url: str

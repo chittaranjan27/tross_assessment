@@ -1,4 +1,5 @@
-from typing import Protocol, Dict, Any, Optional
+from typing import Any, Dict, Protocol
+
 
 class ProfileIdentity:
     def __init__(self, raw_url: str, slug: str):

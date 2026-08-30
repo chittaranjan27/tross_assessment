@@ -1,4 +1,5 @@
-from typing import Optional, Dict, Any, List
+from typing import Dict, List, Optional
+
 
 def normalize_date(date_dict: Optional[Dict[str, int]]) -> Optional[str]:
     if not date_dict:

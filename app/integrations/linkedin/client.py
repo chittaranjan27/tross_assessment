@@ -1,7 +1,9 @@
-import httpx
-import re
-from typing import Dict, Any
 import logging
+import re
+from typing import Any, Dict
+
+import httpx
+
 from app.core.config import settings
 from app.core.exceptions import InvalidProfileUrlError
 from app.integrations.linkedin.provider import ProfileIdentity, ProfileProvider
@@ -35,10 +37,10 @@ class LinkedInClient(ProfileProvider):
     async def get_profile_data(self, identity: ProfileIdentity) -> Dict[str, Any]:
         # The exact endpoints would be determined via reverse engineering.
         # This is a stub for the LinkedIn HTTP contract.
-        
+
         # Example URL based on common unofficial approaches:
         # profile_url = f"https://www.linkedin.com/voyager/api/identity/profiles/{identity.slug}/profileView"
-        
+
         # We will mock the response here since we don't have real credentials or a live session to test.
         # A real implementation would execute:
         # try:
@@ -56,7 +58,7 @@ class LinkedInClient(ProfileProvider):
         #         raise UpstreamUnavailableError()
         # except httpx.TimeoutException:
         #     raise UpstreamTimeoutError()
-        
+
         # Returning a mock raw dict for parsing
         return {
             "slug": identity.slug,
