@@ -20,7 +20,7 @@ def parse_profile(raw_data: Dict[str, Any], url: str) -> ProfileData:
             raw=loc_name,
             city=parts[0] if len(parts) > 0 else None,
             region=parts[1] if len(parts) > 1 else None,
-            country=parts[-1] if len(parts) > 2 else None
+            country=parts[-1] if len(parts) > 2 else None,
         )
 
     # Experience
@@ -72,5 +72,5 @@ def parse_profile(raw_data: Dict[str, Any], url: str) -> ProfileData:
         about=raw_data.get("summary"),
         experience=experiences,
         education=educations,
-        skills=skills
+        skills=skills,
     )

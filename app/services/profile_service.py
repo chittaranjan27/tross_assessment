@@ -8,6 +8,7 @@ from app.services.cache import cache_service
 
 logger = logging.getLogger(__name__)
 
+
 class ProfileService:
     def __init__(self):
         self.provider = LinkedInClient()
@@ -39,20 +40,17 @@ class ProfileService:
         meta = ResponseMeta(
             partial=False,
             missing_sections=[],
-            retrieved_at=datetime.utcnow().isoformat() + "Z"
+            retrieved_at=datetime.utcnow().isoformat() + "Z",
         )
 
-        response = ProfileResponse(
-            success=True,
-            data=profile_data,
-            meta=meta
-        )
+        response = ProfileResponse(success=True, data=profile_data, meta=meta)
 
         # 6. Cache Response
         # Pydantic v2 dump
-        response_dict = response.model_dump(mode='json')
+        response_dict = response.model_dump(mode="json")
         await self.cache.set(cache_key, response_dict)
 
         return response
+
 
 profile_service = ProfileService()

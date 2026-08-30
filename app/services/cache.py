@@ -8,6 +8,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class CacheService:
     def __init__(self):
         self.redis = aioredis.from_url(settings.redis_url, decode_responses=True)
@@ -30,7 +31,9 @@ class CacheService:
             logger.error(f"Redis set error for {key}: {e}")
         return False
 
-    async def is_rate_limited(self, identifier: str, limit: int, window: int = 60) -> bool:
+    async def is_rate_limited(
+        self, identifier: str, limit: int, window: int = 60
+    ) -> bool:
         """Returns True if rate limited, False otherwise"""
         try:
             key = f"rate_limit:{identifier}"
@@ -42,5 +45,6 @@ class CacheService:
             logger.error(f"Redis rate limit error for {identifier}: {e}")
             # Fail open if Redis is down
             return False
+
 
 cache_service = CacheService()

@@ -11,6 +11,7 @@ def test_deduplicate_skills():
     assert len(deduped) == 3
     assert set(deduped) == {"Python", "React", "java"}
 
+
 def test_parse_profile():
     fixture_path = Path(__file__).parent.parent / "fixtures" / "profile.json"
     with open(fixture_path, "r", encoding="utf-8") as f:

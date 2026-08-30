@@ -8,5 +8,6 @@ class ErrorDetail(BaseModel):
     message: str
     request_id: Optional[str] = None
 
+
 class ErrorResponse(BaseModel):
     error: ErrorDetail

@@ -6,6 +6,7 @@ class ProfileIdentity:
         self.raw_url = raw_url
         self.slug = slug
 
+
 class ProfileProvider(Protocol):
     async def resolve_profile(self, profile_url: str) -> ProfileIdentity:
         """Resolve a public URL to a profile identity (e.g. extracting the slug)"""

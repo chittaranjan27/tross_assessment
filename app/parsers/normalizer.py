@@ -12,6 +12,7 @@ def normalize_date(date_dict: Optional[Dict[str, int]]) -> Optional[str]:
         return str(year)
     return None
 
+
 def deduplicate_skills(skills: List[str]) -> List[str]:
     seen = set()
     deduped = []

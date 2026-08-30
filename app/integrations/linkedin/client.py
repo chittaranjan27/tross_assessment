@@ -10,6 +10,7 @@ from app.integrations.linkedin.provider import ProfileIdentity, ProfileProvider
 
 logger = logging.getLogger(__name__)
 
+
 class LinkedInClient(ProfileProvider):
     def __init__(self):
         # Setup headers
@@ -18,12 +19,11 @@ class LinkedInClient(ProfileProvider):
             "Accept": "application/json",
             "Cookie": f"li_at={settings.linkedin_session_cookie}; JSESSIONID={settings.linkedin_csrf_token}",
             "csrf-token": settings.linkedin_csrf_token,
-            "x-li-lang": "en_US"
+            "x-li-lang": "en_US",
         }
         # In a real app we would use connection pooling, but for this exercise we can use a new client or a shared one.
         self.client = httpx.AsyncClient(
-            timeout=settings.upstream_timeout_seconds,
-            headers=self.headers
+            timeout=settings.upstream_timeout_seconds, headers=self.headers
         )
 
     async def resolve_profile(self, profile_url: str) -> ProfileIdentity:
@@ -72,9 +72,7 @@ class LinkedInClient(ProfileProvider):
                     "title": "Senior Software Engineer",
                     "companyName": "Example",
                     "locationName": "Bengaluru",
-                    "timePeriod": {
-                        "startDate": {"year": 2023, "month": 1}
-                    }
+                    "timePeriod": {"startDate": {"year": 2023, "month": 1}},
                 }
             ],
             "education": [
@@ -84,12 +82,9 @@ class LinkedInClient(ProfileProvider):
                     "fieldOfStudy": "Computer Science",
                     "timePeriod": {
                         "startDate": {"year": 2020},
-                        "endDate": {"year": 2022}
-                    }
+                        "endDate": {"year": 2022},
+                    },
                 }
             ],
-            "skills": [
-                {"name": "Python"},
-                {"name": "React"}
-            ]
+            "skills": [{"name": "Python"}, {"name": "React"}],
         }

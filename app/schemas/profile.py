@@ -20,14 +20,17 @@ class ProfileRequest(BaseModel):
             raise InvalidProfileUrlError()
         return v
 
+
 class Location(BaseModel):
     raw: Optional[str] = None
     city: Optional[str] = None
     region: Optional[str] = None
     country: Optional[str] = None
 
+
 class ProfileImage(BaseModel):
     url: Optional[str] = None
+
 
 class Experience(BaseModel):
     title: Optional[str] = None
@@ -39,12 +42,14 @@ class Experience(BaseModel):
     end_date: Optional[str] = None
     description: Optional[str] = None
 
+
 class Education(BaseModel):
     institution: Optional[str] = None
     degree: Optional[str] = None
     field_of_study: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+
 
 class Certification(BaseModel):
     name: Optional[str] = None
@@ -53,9 +58,11 @@ class Certification(BaseModel):
     expiration_date: Optional[str] = None
     credential_id: Optional[str] = None
 
+
 class Language(BaseModel):
     name: Optional[str] = None
     proficiency: Optional[str] = None
+
 
 class ProfileData(BaseModel):
     id: Optional[str] = None
@@ -73,10 +80,12 @@ class ProfileData(BaseModel):
     certifications: List[Certification] = Field(default_factory=list)
     languages: List[Language] = Field(default_factory=list)
 
+
 class ResponseMeta(BaseModel):
     partial: bool = False
     missing_sections: List[str] = Field(default_factory=list)
     retrieved_at: str
+
 
 class ProfileResponse(BaseModel):
     success: bool = True
