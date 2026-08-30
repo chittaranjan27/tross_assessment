@@ -35,56 +35,144 @@ class LinkedInClient(ProfileProvider):
         return ProfileIdentity(raw_url=profile_url, slug=slug)
 
     async def get_profile_data(self, identity: ProfileIdentity) -> Dict[str, Any]:
-        # The exact endpoints would be determined via reverse engineering.
-        # This is a stub for the LinkedIn HTTP contract.
+        """
+        Fetches profile data from LinkedIn's Voyager API.
+        Requires valid li_at and JSESSIONID credentials in .env
+        """
+        from app.core.exceptions import (
+            ProfileNotFoundError,
+            UpstreamAuthenticationError,
+            UpstreamRateLimitError,
+            UpstreamResponseParseError,
+            UpstreamTimeoutError,
+            UpstreamUnavailableError,
+        )
 
-        # Example URL based on common unofficial approaches:
-        # profile_url = f"https://www.linkedin.com/voyager/api/identity/profiles/{identity.slug}/profileView"
+        profile_url = (
+            f"https://www.linkedin.com/voyager/api/identity/profiles"
+            f"/{identity.slug}/profileView"
+        )
 
-        # We will mock the response here since we don't have real credentials or a live session to test.
-        # A real implementation would execute:
-        # try:
-        #     response = await self.client.get(profile_url)
-        #     response.raise_for_status()
-        #     return response.json()
-        # except httpx.HTTPStatusError as e:
-        #     if e.response.status_code == 404:
-        #         raise ProfileNotFoundError()
-        #     elif e.response.status_code == 429:
-        #         raise UpstreamRateLimitError()
-        #     elif e.response.status_code in (401, 403):
-        #         raise UpstreamAuthenticationError()
-        #     else:
-        #         raise UpstreamUnavailableError()
-        # except httpx.TimeoutException:
-        #     raise UpstreamTimeoutError()
+        try:
+            response = await self.client.get(profile_url)
 
-        # Returning a mock raw dict for parsing
+            if response.status_code == 404:
+                raise ProfileNotFoundError()
+            elif response.status_code == 429:
+                raise UpstreamRateLimitError()
+            elif response.status_code in (401, 403):
+                raise UpstreamAuthenticationError()
+            elif response.status_code >= 500:
+                raise UpstreamUnavailableError()
+
+            response.raise_for_status()
+
+            try:
+                data = response.json()
+            except Exception:
+                raise UpstreamResponseParseError()
+
+            # LinkedIn Voyager returns a nested structure — flatten it
+            return self._normalize_voyager_response(data, identity.slug)
+
+        except (
+            ProfileNotFoundError,
+            UpstreamRateLimitError,
+            UpstreamAuthenticationError,
+            UpstreamUnavailableError,
+            UpstreamResponseParseError,
+        ):
+            raise
+        except httpx.TimeoutException:
+            raise UpstreamTimeoutError()
+        except httpx.RequestError as e:
+            logger.error(f"Request error for {identity.slug}: {e}")
+            raise UpstreamUnavailableError()
+
+    def _normalize_voyager_response(
+        self, data: Dict[str, Any], slug: str
+    ) -> Dict[str, Any]:
+        """
+        Flatten LinkedIn's Voyager profileView response into our internal schema.
+        The response contains a top-level profile object + an 'included' entity graph.
+        """
+        # Build entity lookup from included array for reference resolution
+        included = data.get("included", [])
+        entities: Dict[str, Any] = {
+            item["entityUrn"]: item
+            for item in included
+            if isinstance(item, dict) and item.get("entityUrn")
+        }
+
+        # Core profile is usually the first element or in data directly
+        profile = data.get("profile", {}) or (included[0] if included else {})
+        if not profile:
+            profile = data
+
+        # Extract basic fields
+        first_name = profile.get("firstName", "")
+        last_name = profile.get("lastName", "")
+        headline = profile.get("headline", "")
+        location_name = profile.get("locationName", "")
+        summary = profile.get("summary", "")
+
+        # Extract experience from included entities
+        experiences = []
+        for item in included:
+            if not isinstance(item, dict):
+                continue
+            if "com.linkedin.voyager.dash.identity.profile.Position" in item.get(
+                "entityUrn", ""
+            ):
+                time_period = item.get("timePeriod", {}) or {}
+                experiences.append(
+                    {
+                        "title": item.get("title"),
+                        "companyName": item.get("companyName"),
+                        "locationName": item.get("locationName"),
+                        "timePeriod": time_period,
+                        "description": item.get("description"),
+                    }
+                )
+
+        # Extract education
+        educations = []
+        for item in included:
+            if not isinstance(item, dict):
+                continue
+            if "com.linkedin.voyager.dash.identity.profile.Education" in item.get(
+                "entityUrn", ""
+            ):
+                time_period = item.get("timePeriod", {}) or {}
+                educations.append(
+                    {
+                        "schoolName": item.get("schoolName"),
+                        "degreeName": item.get("degreeName"),
+                        "fieldOfStudy": item.get("fieldOfStudy"),
+                        "timePeriod": time_period,
+                    }
+                )
+
+        # Extract skills
+        skills = []
+        for item in included:
+            if not isinstance(item, dict):
+                continue
+            if "com.linkedin.voyager.dash.identity.profile.Skill" in item.get(
+                "entityUrn", ""
+            ):
+                name = item.get("name")
+                if name:
+                    skills.append({"name": name})
+
         return {
-            "slug": identity.slug,
-            "firstName": "John",
-            "lastName": "Doe",
-            "headline": "Senior Software Engineer",
-            "locationName": "Bengaluru, Karnataka, India",
-            "summary": "Experienced software engineer.",
-            "experience": [
-                {
-                    "title": "Senior Software Engineer",
-                    "companyName": "Example",
-                    "locationName": "Bengaluru",
-                    "timePeriod": {"startDate": {"year": 2023, "month": 1}},
-                }
-            ],
-            "education": [
-                {
-                    "schoolName": "Example University",
-                    "degreeName": "MCA",
-                    "fieldOfStudy": "Computer Science",
-                    "timePeriod": {
-                        "startDate": {"year": 2020},
-                        "endDate": {"year": 2022},
-                    },
-                }
-            ],
-            "skills": [{"name": "Python"}, {"name": "React"}],
+            "slug": slug,
+            "firstName": first_name,
+            "lastName": last_name,
+            "headline": headline,
+            "locationName": location_name,
+            "summary": summary,
+            "experience": experiences,
+            "education": educations,
+            "skills": skills,
         }
